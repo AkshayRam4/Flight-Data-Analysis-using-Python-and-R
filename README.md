@@ -14,4 +14,9 @@ Data was visualised in both R and Python to answer the following research questi
    
 5. Use the available variables to construct a model that predicts delays.
 
-A linear regression model was constructed to predict future flight delays in real world scenarios.
+
+Produced a detailed analysis of commercial flights, passenger travel habits and cascading delays between
+airports using both Python and R programming languages. Performed feature selection and built a multiple
+linear regression model to predict future flight delays in real world scenarios. A report was produced where data visualisations from
+both Python and R were put together and proved that similar conclusions were drawn from them.
+
