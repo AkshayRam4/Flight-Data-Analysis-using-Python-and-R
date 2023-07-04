@@ -1,10 +1,5 @@
 # Flight-Data-Analysis-using-Python-and-R
 
-
-Flight Data Analysis using Python and R programming languagesFlight Data Analysis using Python and R programming languages
-Jan 2022 - Apr 2022Jan 2022 - Apr 2022
-
-Associated with University of LondonAssociated with University of London
 The 2006 and 2007 years of the flights dataset from the Harvard dataverse was used for this project. Data was cleaned before conducting an in-depth analysis using the available variables. 
 
 Data was visualised in both R and Python to answer the following research questions,
