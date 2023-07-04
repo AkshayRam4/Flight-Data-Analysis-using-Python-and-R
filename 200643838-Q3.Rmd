@@ -1,0 +1,153 @@
+---
+title: "Question 3"
+output: html_document
+date: '2022-03-27'
+---
+
+#Importing the datasets needed for this question
+
+```{r}
+datacomb=read.csv("../Coursework R/datacomb.csv")
+airports=read.csv("../Coursework R/airports.csv")
+```
+
+```{r}
+#Viewing the top 5 rows of "datacomb"
+head(datacomb)
+```
+
+```{r}
+#Creating a dataframe to work on 
+dataset<-datacomb[,c(2,3,11,18,19)]
+head(dataset)
+```
+
+```{r}
+#Viewing the dataframe "airports"
+show(airports)
+```
+
+```{r}
+#Checking for missing values
+colSums(is.na(dataset))
+```
+
+#There are no missing values in "dataset"
+
+```{r}
+#Making a dataset on the Origin of the flight using iata and state
+Origin_data<-airports[,c(2,5)]
+```
+
+```{r}
+#Viewing Origin_data
+show(Origin_data)
+```
+
+```{r}
+#Renaming the columns of Origin_data
+colnames(Origin_data)<-c("Origin","Origin_state")
+#Viewing "Origin_data"
+show(Origin_data)
+```
+
+```{r}
+#Making a dataset on the destination of the flight using iata and state
+Dest_data<-airports[,c(2,5)]
+show(Dest_data)
+```
+
+```{r}
+#Renaming the columns of Dest_data
+colnames(Dest_data)<-c("Dest","Dest_state")
+#Viewing Dest_data
+show(Dest_data)
+```
+
+```{r}
+#Merging "Origin_data" with "dataset" on "Origin"
+data<-merge(dataset,Origin_data,by="Origin")
+```
+
+```{r}
+#Merging "Dest_data" with "data" on "Dest"
+finaldataset<-merge(data,Dest_data,by ="Dest")
+```
+
+```{r}
+#Viewing the head of "finaldataset"
+head(finaldataset)
+```
+
+```{r}
+#importing the "dplyr" library
+library(dplyr)
+#creating a table named data by grouping by Year and Month on count of FlightNum
+groupeddata<-finaldataset %>% group_by(Year,Month) %>% summarise(count_FlightNum = n())
+#Viewing "groupeddata"
+show(groupeddata)
+```
+
+```{r}
+#Seperating the 2006 and 2007 Year rows from "groupeddata"
+data2006<-groupeddata[1:12,]
+data2007<-groupeddata[13:24,]
+```
+
+## Plotting a line graph to visualise
+
+```{r}
+#importing the library"ggplot2"
+library(ggplot2)
+#Line plot
+ggplot() + 
+geom_line(data=data2006, aes(x=Month,y=count_FlightNum, colour="2006"))+ geom_line(data=data2007, aes(x=Month,y=count_FlightNum, colour="2007"))+  geom_point(data=data2006, aes(x=Month,y=count_FlightNum, colour="2006"))+
+geom_point(data=data2007, aes(x=Month,y=count_FlightNum, colour="2007"))+
+scale_x_discrete(limit=c("Jan","Feb","March","April","May","June","July","Aug","Sept","Oct","Nov","Dec"))+
+xlab('Month') +
+ylab('Number of flights')+
+ggtitle("Linegraph showing the number of flights between different locations overtime")
+```
+
+```{r}
+# Splitting "finaldataset" by years "2006" and "2007"
+data06<-finaldataset[finaldataset$Year==2006,]
+data07<-finaldataset[finaldataset$Year==2007,]
+```
+
+```{r}
+#Creating column named "Route" in "data06" and "data07" to find different routes taken by planes
+data06['Route']<- NA
+data06['Route']<-paste(data06$Origin_state,data06$Dest_state,sep=":")
+data07['Route']<- NA
+data07['Route']<-paste(data07$Origin_state,data07$Dest_state,sep=":")
+```
+
+```{r}
+#Making a dataframe containing frequencies of Routes in 2006 to find routes with the highest number of flights(/number of people travelling)
+frq_2006<-data.frame(table(data06$Route))
+#Arranging the routes in the descending frequency order
+frq_2006<-arrange(frq_2006,desc(Freq))
+frq_2006
+```
+
+```{r}
+#Renaming the columns of the table appropriately
+colnames(frq_2006)<-c("Origin_state:Dest_state","Number of people")
+#Viewing the table for 2006 route data
+frq_2006
+```
+
+```{r}
+#Making a dataframe containing frequencies of Routes in 2007 to find routes with the highest number of flights(/number of people travelling)
+frq_2007<-data.frame(table(data07$Route))
+#Arranging the routes in the descending frequency order
+frq_2007<-arrange(frq_2007,desc(Freq))
+frq_2007
+```
+```{r}
+#Renaming the columns of the table appropriately
+colnames(frq_2007)<-c("Origin_state:Dest_state","Number of people")
+#Viewing the table for 2007 route data
+frq_2007
+```

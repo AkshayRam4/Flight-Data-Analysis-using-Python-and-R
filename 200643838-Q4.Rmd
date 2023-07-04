@@ -1,0 +1,137 @@
+---
+title: "Question 4"
+output: html_document
+date: '2022-03-27'
+---
+
+##Importing the cleaned combined dataset
+
+```{r}
+datacomb=read.csv("../Coursework R/datacomb.csv")
+```
+
+```{r}
+#Viewing the first 5 rows of "datacomb"
+head(datacomb)
+```
+
+`
+```{r}
+#Importing the necessary libraries
+library(stringi)
+library(lubridate)
+#Creating a dataframe with only columns that are needed to answer this question
+dataset=datacomb[,c(2,3,4,7,12,16,17)]
+head(dataset)
+```
+
+```{r}
+#Convertion to time date format
+#Seperating minutes from CRSDepTime column
+Minutes<-stri_sub(as.character(dataset$CRSDepTime), -2 , -1)
+#Converting minutes to a list
+Minutes<-as.list(Minutes) 
+head(Minutes)
+```
+
+```{r}
+#Seperating Hours from CRSDepTime column
+Hours<-stri_sub(as.character(dataset$CRSDepTime), 1, -3)
+#Converting hours to a list
+Hours<-as.list(Hours)
+head(Hours)
+```
+
+```{r}
+#Adding 0s to single digit hour values to make it to datetime format
+Hours[Hours==""]<-0
+#Converting DayOfMonth column to a list
+Days<-as.list(as.character(dataset$DayofMonth))
+
+#Converting Month column to a list
+Month<-as.list(as.character(dataset$Month))
+
+#Converting Year column to a list
+Year<-as.list(as.character(dataset$Year))
+```
+
+```{r}
+#Creating a timedata format column in "dataset" including all the info in the lists above
+dataset["Time"]<-paste(Days,Month,Year,Hours,Minutes,sep = ":")
+```
+
+```{r}
+#Changing the "Time" column into date time format
+dataset$Time <- as.POSIXct(dataset$Time,format="%d:%m:%Y:%H:%M")
+```
+```{r}
+#Viewing the head of "dataset" to check whether the Time column is added
+head(dataset)
+```
+```{r}
+#Creating a column on the totaldelay in "dataset"
+dataset['TotalDelay']<-dataset$ArrDelay + dataset$DepDelay
+```
+```{r}
+#'dataset' is then sorted in the ascending order by time
+#'This is done to ensure the flights are ordered in a proper timeline
+# Grouping by the TailNum to identify each plane and sorting the flights according to the "Time" column
+library(dplyr) #importing the dplyr library
+dataset<-dataset %>% arrange(Time) %>% group_by(TailNum)
+```
+```{r}
+#Viewing the top 5 rows of'dataset'
+head(dataset)
+```
+#It can be seen from the above dataframe 'dataset' that the time has been ordered ascendingly
+```{r}
+#Removing any missing values from the 'TotalDelay' column since we use that column in this question
+dataset<-dataset[!is.na(dataset$TotalDelay),]
+
+#We create a column named 'Previousdelay' to show the delay that happened in the previous flight of the plane.(delay in the previous airport)
+dataset['Previousdelay']<-dataset$TotalDelay
+
+#lagging values in "Previousdelay' by one row
+dataset<-dataset %>% mutate_at(c("Previousdelay"), list(lag), n=1 )
+```
+
+```{r}
+#Checking for missing values in 'dataset'
+colSums(is.na(dataset))
+```
+```{r}
+#Removing missing values from 'Previousdelay' column
+dataset<-dataset[!is.na(dataset$Previousdelay),]
+```
+
+# Plotting a scatter plot to visualise cascading delays
+
+```{r}
+#importing ggplot2 library 
+library(ggplot2)
+#plotting the scatter plot
+ggplot(dataset,aes(x=Previousdelay,y=TotalDelay)) + geom_point(color="Blue")+ xlab("Previous Delay/mins")+ ylab("Current Delay/mins")+
+ggtitle("Scatter plot represents the delay in current airport vs delay in the previous airport")
+```
+```{r}
+#The places where there is a delay>0, the value is changed to 1 or if not changed to 0(to classify whether there was a delay or not)
+dataset[dataset$Previousdelay>0,"PreviousDelay"]=1
+dataset[dataset$Previousdelay<=0,"PreviousDelay"]=0
+dataset[dataset$TotalDelay>0,"CurrentDelay"]=1
+dataset[dataset$TotalDelay<=0,"CurrentDelay"]=0
+```
+
+```{r}
+#Making a crosstab to make the final conclusion
+crosstab <-table(dataset$PreviousDelay,dataset$CurrentDelay) 
+crosstab
+#CurrentDelay will be the columns and PreviousDelay will be the rows in the crosstab output with frequencies
+```
+
+```{r}
+#Calculating the row %s in crosstab to understand it better
+prop.table(crosstab, 1)
+#CurrentDelay will be the columns and PreviousDelay will be the rows in the crosstab output.
+```
+
+###The numbers in the crosstab are probabilities of events occuring.This is explained in the report.

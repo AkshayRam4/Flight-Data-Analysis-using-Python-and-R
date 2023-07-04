@@ -1,0 +1,82 @@
+---
+title: "Question 2"
+output: html_document
+date: '2022-03-27'
+---
+
+#Importing the plane_data and datacomb datasets
+```{r}
+datacomb<-read.csv("../Coursework R/datacomb.csv")
+plane_data<-read.csv("../Coursework R/planedata.csv")
+```
+
+#Renaming tailnum in plane_data dataset to make it common to both datacomb and plane_data
+```{r}
+colnames(plane_data)[2]<-"TailNum"
+```
+
+#Removing missing values from DepDelay and ArrDelay
+```{r}
+datacomb<-datacomb[!is.na(datacomb$DepDelay), ]
+datacomb<-datacomb[!is.na(datacomb$ArrDelay), ]
+```
+
+#Creating a dataframe named "dataset" with only the required columns for this question
+```{r}
+dataset=datacomb[,c(2,12,16,17)]
+head(dataset)
+```
+
+```{r}
+#merging both plane_data and datacomb on TailNum
+finalcomb<-merge (dataset,plane_data, by="TailNum")
+```
+```{r}
+#Checking the top 5 rows of the dataframe "finalcomb"
+head(finalcomb)
+```
+```{r}
+#Removing the unnecessary column named "X" from "finalcomb"
+finalcomb=finalcomb[,c(1,2,3,4,6,7,8,9,10,11,12,13)]
+head(finalcomb)
+```
+
+#Making a table by the aggregate function with average of DepDelay,average of ArrDelay and Year
+```{r}
+AvgArrDelay_year<-aggregate(finalcomb$ArrDelay , by=list(finalcomb$year), FUN=mean) 
+AvgDepDelay_year<-aggregate(finalcomb$DepDelay , by=list(finalcomb$year), FUN=mean) 
+#Column binding AvgArrDelay and AvgDepDelay
+Avgdelays=cbind(AvgArrDelay_year,AvgDepDelay_year) 
+#Removing the unnecessary columns
+Avgdelays<-Avgdelays[,c(1,2,4)] 
+```
+```{r}
+#Column names are changed appropriately
+colnames(Avgdelays)<-c('Manufacture_year','AvgArrDelay','AvgDepDelay') 
+#Average of delays is calculated once again - the same method as in Q1
+Avgdelays['AvgOfDelays'] <- (Avgdelays$AvgArrDelay+Avgdelays$AvgDepDelay)/2
+Avgdelays
+```
+```{r}
+#It is seen when we go through "Avgdelays" table above that there are 2 out of range data(meaningless)  under Manufacture_year column which are'0000' and 'None' hence they are removed.
+Avgdelays<-Avgdelays[2:49,]
+#The manufacture year column is changed into integer datatype to do a line plot and to find the correlation between plane manufacture year and Avgofdelays
+Avgdelays$Manufacture_year<-as.integer(Avgdelays$Manufacture_year)
+```
+
+#Plotting a line plot to visualize
+```{r}
+#importing library "ggplot2"
+library(ggplot2)
+#Line plot
+ggplot()+ geom_line(data=Avgdelays, aes(x=Manufacture_year,y=AvgOfDelays, colour="AvgofDelays"))+  geom_point(data=Avgdelays, aes(x=Manufacture_year,y=AvgOfDelays, colour="AvgofDelays")) + xlab("Plane Manufacture Year")+ ylab("Average Delay/mins")+
+  ggtitle("Line graph representing Average delays per plane manufacture year")
+```
+
+```{r}
+#Correlation (spearman) is too found to check whether there is an association between Plane Manufacture Year and the average delay.
+cor(Avgdelays$Manufacture_year, Avgdelays$AvgOfDelays,
+    method = "pearson")
+```
+# The correlation between Plane manufacture year and Avgofdelays is -0.07109128
+

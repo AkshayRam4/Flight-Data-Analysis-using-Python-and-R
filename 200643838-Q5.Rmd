@@ -1,0 +1,186 @@
+---
+title: "Question 5"
+output: html_document
+date: '2022-03-28'
+---
+
+```{r}
+#Importing the combined dataset
+datacomb=read.csv("../Coursework R/datacomb.csv")
+```
+
+```{r}
+#Checking for missing values in "datacomb" before checking correlation and finding a model
+colSums(is.na(datacomb))
+```
+
+```{r}
+#Removing the unnecessary column named "X" from "datacomb"
+datacomb<-datacomb[,2:30]
+#Viewing the top 5 rows of "datacomb"
+head(datacomb)
+```
+
+```{r}
+#Removing missing values only from the "ArrDelay" column only for now since the dependent variable of the model is going to be ArrDelay 
+datacomb<-datacomb[!is.na(datacomb$ArrDelay),]
+```
+
+```{r}
+#Exploring "datacomb" including checking the datatypes of the column variables
+summary(datacomb)
+```
+
+```{r}
+#Taking out the categorical variables out of 'datacomb' to plot the correlation plot
+data<-datacomb[,c(1,2,3,4,5,6,7,8,12,13,14,15,16,19,20,21,25,26,27,28,29)]
+```
+
+```{r}
+#Viewing the head of 'data' to check whether the columns in 'data' are numerical variables
+head(data)
+```
+
+```{r}
+#Checking the correlation between the column variables in "datacomb"
+#Importing necessary libraries
+library(plotly)
+library(ggplot2)
+library(corrplot) #Importing the "corrplot" library
+corrplot(abs(cor(data)), method="color",
+         title="A correlation plot for columns in 'data'",
+         tl.col="black" , tl.srt=45 ,
+         addCoef.col="black" ,
+         number.cex = 0.5 ,
+         tl.cex = 0.5 ,
+         is.corr= FALSE ,
+         col=colorRampPalette(c("khaki","lightblue1","red"))(100))
+```
+
+## A multiple linear regression model is constructed
+
+```{r}
+#Creating a dataframe named 'data1' to store the columns that are needed for the regression model
+data1<-data[,c(2,3,4,6,12,13,21)]
+```
+
+```{r}
+#Checking for missing values in 'data1' before we create the model
+colSums(is.na(data1))
+```
+
+###No missing values in 'data1'
+
+```{r}
+#Importing the "catools" library and split "data1" into training and testing datasets
+library(caTools)
+set.seed(1)
+#Creating a vector named 'split' containing 0s and 1s to make 70% training and 30% testing sets
+split<- sample(c(rep(0, 0.7 * nrow(data1)), rep(1, 0.3 * nrow(data1))))
+```
+
+```{r}
+#Getting the training and testing datasets using the 'split' vector
+train <- data1[split == 0, ] #Creating the training set
+test <- data1[split== 1, ]   #Creating the testing set
+```
+
+```{r}
+#Viewing the first few rows of "train" and "test"
+head(train)
+head(test)
+```
+
+```{r}
+#Seperating the explanatory(independent) and target(dependent) variables from the training and testing datasets
+x_train<-train[,c(1,2,3,4,6,7)]
+y_train<-train[,5]
+x_test<-test[,c(1,2,3,4,6,7)]
+y_test<-test[,5]
+```
+
+```{r}
+#Scaling the explanatory variables in testing and training sets to avoid multicollinearity
+x_train<-scale(x_train)
+x_test<-scale(x_test)
+```
+### y_test and y_train are not scaled since it is the target variable "ArrDelay"
+
+```{r}
+#Converting "train" and "test" to dataframes
+library(dplyr)
+x_train<-as.data.frame(x_train)
+x_test<-as.data.frame(x_test)
+```
+
+```{r}
+#Combining y_train with the scaled x_train to form the scaled training set
+scaled_train<-cbind(x_train,y_train)
+#Combining y_test with the scaled x_test to form the scaled testing test
+scaled_test<-cbind(x_test,y_test)
+```
+
+```{r}
+#Viewing the first few rows of the scaled training and testing datasets
+head(scaled_test)
+head(scaled_train)
+```
+
+```{r}
+#Renaming the column "y_train" in "scaled_train" and the column "y_test" in "scaled_test" to "ArrDelay"
+colnames(scaled_train)<-c("Month","DayofMonth","DayOfWeek","CRSDepTime","DepDelay","LateAircraftDelay","ArrDelay")
+colnames(scaled_test)<-c("Month","DayofMonth","DayOfWeek","CRSDepTime","DepDelay","LateAircraftDelay","ArrDelay")
+```
+
+```{r}
+#Building the multiple linear regression model
+Multilinearmodel<-lm(formula=ArrDelay~Month+DayofMonth+DayOfWeek+CRSDepTime+DepDelay+LateAircraftDelay, data = scaled_train)
+```
+
+```{r}
+#Evaluation of the model
+summary(Multilinearmodel)
+```
+
+#Finding the Mean Squared Error for the model
+
+```{r}
+#Finding the predicted Arrivaldelay using the testing dataset "x_test"
+y_pred<-predict(Multilinearmodel,newdata = x_test)
+```
+
+```{r}
+#Viewing "y_pred"
+head(y_pred)
+```
+```{r}
+#Comparing the predicted y values from the model with the y_test data
+head(y_test)
+```
+###Seems to have variations in the y values but the 6th observation is really close
+
+```{r}
+#Calculating the mean squared error
+MSE<-mean((scaled_test$ArrDelay-y_pred)**2)
+RMSE<-sqrt(MSE)
+```
+
+```{r}
+paste("The mean squared error for this model is", MSE)
+paste("The root mean squared error for this model is", RMSE)
+```
+
+
+#Plotting a histogram on residuals to check whether the errors are normally distributed
+
+```{r}
+#Creating a vector named 'res' to include the residuals of the model
+res<-residuals(Multilinearmodel)
+#Converting the residual vector to a dataframe
+res<- as.data.frame(res)
+```
+
+```{r}
+#Plotting the histogram 
+ggplot(res,aes(res)) + geom_histogram(fill='blue',alpha=0.5,bins=100) + ggtitle("Histogram of the residuals") + xlim(c(-50,50))
+```

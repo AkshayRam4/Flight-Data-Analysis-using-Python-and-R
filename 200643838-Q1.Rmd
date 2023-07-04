@@ -1,0 +1,122 @@
+---
+title: "Question1"
+output: html_document
+date: '2022-03-27'
+---
+
+#Importing the cleaned combined dataset "datacomb"
+```{r}
+datacomb<-read.csv("../Coursework R/datacomb.csv")
+```
+
+#removing missing values in DepDelay and ArrDelay since we need these columns for this question
+```{r}
+data <- datacomb[!is.na(datacomb$DepDelay), ]
+
+data <- data[!is.na(data$ArrDelay), ]
+```
+
+## Best DayOfweek to minimise delays
+
+```{r}
+#grouping Dayofweek by averagearrivaldelays and average departure delays
+AvgArrDelay<-aggregate(data$ArrDelay , by=list(data$DayOfWeek), FUN=mean) 
+AvgDepDelay<-aggregate(data$DepDelay , by=list(data$DayOfWeek), FUN=mean) 
+```
+
+```{r}
+#Column binding both AvgArrDelay and AvgDepDelay variables 
+Avgdelaysperweekday=cbind(AvgArrDelay,AvgDepDelay) 
+#Removing the common Dayofweek column in the binded variable
+Avgdelaysperweekday<-Avgdelaysperweekday[,c(1,2,4)] 
+#Renaming the  column names appropriately
+colnames(Avgdelaysperweekday)<-c('DayOfWeek','AvgArrDelay','AvgDepDelay') 
+#Finding the average of both averages of AvgArrDelay and AvgDepDelay
+AvgofDelays <- (Avgdelaysperweekday$AvgArrDelay+Avgdelaysperweekday$AvgDepDelay)/2
+#Column binding AvgOfDelays and Avgdelaysperweekday
+Avgdelaysperweekday<-cbind(Avgdelaysperweekday,AvgofDelays)
+#Viewing "Avgdelaysperweekday" table
+show(Avgdelaysperweekday)
+```
+
+#Plotting a lineplot to visualise
+
+```{r}
+#importing the library "ggplot2" needed for data visualisations
+library(ggplot2)
+#Plotting a lineplot to find the best dayofweek to minimise delays
+ggplot()+ geom_line(data=Avgdelaysperweekday, aes(x=DayOfWeek,y=AvgArrDelay, colour="AvgArrDelay"))+ geom_line(data=Avgdelaysperweekday, aes(x=DayOfWeek,y=AvgDepDelay, colour="AvgDepDelay")) + geom_line(data=Avgdelaysperweekday, aes(x=DayOfWeek,y=AvgofDelays, colour="AvgofDelays")) +
+geom_point(data=Avgdelaysperweekday, aes(x=DayOfWeek,y=AvgArrDelay, colour="AvgArrDelay")) + geom_point(data=Avgdelaysperweekday, aes(x=DayOfWeek,y=AvgDepDelay, colour="AvgDepDelay")) + geom_point(data=Avgdelaysperweekday, aes(x=DayOfWeek,y=AvgofDelays, colour="AvgofDelays")) + xlab("DayOfWeek")+ ylab("Average Delay/mins")+ scale_x_discrete(limits=c("Mon","Tue","Wed","Thurs","Fri","Sat","Sun"))+
+ggtitle("Line graph representing AverageDelays per weekday")
+```
+### Saturday is the best day of week to minimse delays
+
+##Best Month to minimise delays
+
+```{r}
+#Grouping Months by Average arrival and average departure delays
+AvgArrDelay_month<-aggregate(data$ArrDelay , by=list(data$Month), FUN=mean) 
+AvgDepDelay_month<-aggregate(data$DepDelay , by=list(data$Month), FUN=mean)
+```
+
+```{r}
+#Column binding the right above 2 dataframes 
+Avgdelayspermonth=cbind(AvgArrDelay_month,AvgDepDelay_month) 
+#Removing the common Month column
+Avgdelayspermonth<-Avgdelayspermonth[,c(1,2,4)]
+#Renaming the columns appropriately
+colnames(Avgdelayspermonth)<-c('Month','AvgArrDelay','AvgDepDelay') 
+#Fing the average of the average DepDelay and average ArrDelay
+AvgofDelays <- (Avgdelayspermonth$AvgArrDelay+Avgdelayspermonth$AvgDepDelay)/2
+#Binding them Avgdelaypermonth and AvgofDelays by columns
+Avgdelayspermonth=cbind(Avgdelayspermonth,AvgofDelays)
+#Viewing "Avgdelayspermonth"
+show(Avgdelayspermonth)
+```
+
+#Plotting a lineplot to visualise
+```{r}
+#Using "ggplot2" library which is already imported above , to draw a line plot
+library(ggplot2)
+ggplot()+ geom_line(data=Avgdelayspermonth, aes(x=Month,y=AvgArrDelay, colour="AvgArrDelay"))+ geom_line(data=Avgdelayspermonth, aes(x=Month,y=AvgDepDelay, colour="AvgDepDelay")) + geom_line(data=Avgdelayspermonth, aes(x=Month,y=AvgofDelays, colour="AvgofDelays")) +
+geom_point(data=Avgdelayspermonth, aes(x=Month,y=AvgArrDelay, colour="AvgArrDelay")) + geom_point(data=Avgdelayspermonth, aes(x=Month,y=AvgDepDelay, colour="AvgDepDelay")) + geom_point(data=Avgdelayspermonth, aes(x=Month,y=AvgofDelays, colour="AvgofDelays")) + xlab("Month")+ ylab("Average Delay/mins")+ scale_x_discrete(limits=c("Jan","Feb","March","April","May","June","July","August","Sep","Oct","Nov","Dec"))+
+ggtitle("Line graph representing AvgDelays per month")
+```
+### September is the best Month to minimise delays
+
+## Best Time Of Day to minimise delays
+
+```{r}
+#CRSDepTime column is converted into 8 different intervals and stored in a new column named"Timebucket" in the dataframe "data"
+#Creating an empty column named "Timebucket"
+data$Timebucket<- NA
+#Creating values from 1 to 8 in "Timebucket" conditioning as follows on the "CRSDepTime" column
+data[data$CRSDepTime>=0000 & data$CRSDepTime<0300,"Timebucket"] <- 1
+data[data$CRSDepTime>=0300 & data$CRSDepTime<0600,"Timebucket"] <- 2
+data[data$CRSDepTime>=0600 & data$CRSDepTime<0900,"Timebucket"] <- 3
+data[data$CRSDepTime>=0900 & data$CRSDepTime<1200,"Timebucket"] <- 4
+data[data$CRSDepTime>=1200 & data$CRSDepTime<1500,"Timebucket"] <- 5
+data[data$CRSDepTime>=1500 & data$CRSDepTime<1800,"Timebucket"] <- 6
+data[data$CRSDepTime>=1800 & data$CRSDepTime<2100,"Timebucket"] <- 7
+data[data$CRSDepTime>=2100 & data$CRSDepTime<=2400,"Timebucket"] <- 8
+```
+
+##Plotting side by side boxplots to visualise
+```{r}
+#Creating a Totaldelay column in "data" dataframe
+data$TotalDelay<- NA
+data$TotalDelay=data$ArrDelay + data$DepDelay
+```
+
+```{r}
+#Converting "Timebucket" into a factor to make it categorical
+data$Timebucket<-as.factor(data$Timebucket)
+```
+
+#Using ggplot2 to do the box plot
+```{r}
+ggplot(data=data, aes(x=TotalDelay, y=Timebucket)) +
+  geom_boxplot(fill="red") +xlim(c(-65,75))+
+  ggtitle('Horizontal Boxplots of TotalDelay by Timeofday ')
+```
+### The time bucket "2" which is equal to [03:00,06:00) is the best time of day to minimise delays

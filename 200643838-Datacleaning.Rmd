@@ -1,0 +1,91 @@
+---
+title: "Data Cleaning in R"
+output: html_document
+date: '2022-03-27'
+---
+
+#Importing the 2006, 2007 year datasets
+
+```{r}
+dataset_2006<-read.csv("../Coursework R/2006.csv")
+dataset_2007<-read.csv("../Coursework R/2007.csv")
+```
+
+#Creating a complete data set since both 2006,2007 datasets have the same columns
+
+```{r}
+datacomb<-rbind(dataset_2006,dataset_2007)
+```
+
+#Exploring the combined dataset
+```{r}
+summary(datacomb)
+head(datacomb)
+```
+#Changing the CRSDepTime column into timedataformat 
+```{r}
+datacomb$CRSDepTime <- sprintf("%04d",datacomb$CRSDepTime)
+```
+
+#Importing the CSV Files and exploring it
+```{r}
+airports<-read.csv("../Coursework R/airports.csv")
+summary(airports)
+plane_data<-read.csv("../Coursework R/plane-data.csv")
+summary(plane_data)
+
+```
+#Removing duplicate rows from datacomb using the dplyr library
+```{r}
+library(dplyr)
+datacomb<-distinct(datacomb) #to keep only the unique rows
+```
+
+#Removing duplicate rows from the other datasets
+```{r}
+d1<-duplicated(airports)
+airports<-subset(airports,!d1)
+d2<-duplicated(plane_data)
+plane_data<-subset(plane_data,!d2)
+```
+
+#Converting empty cells into "NA" values
+```{r}
+plane_data[plane_data == ""] <- NA
+airports[airports == ""] <- NA
+datacomb[datacomb == ""]<-NA
+```
+
+#Checking for missing values in airports datasets
+```{r}
+colSums(is.na(airports))
+```
+#Checking for missing values in planedata
+```{r}
+colSums(is.na(plane_data))
+```
+#Checking for missing values in datacomb
+```{r}
+colSums(is.na(datacomb))
+```
+#Removing missing values in airports, plane_data datasets
+```{r}
+plane_data <- plane_data[!is.na(plane_data$year), ]
+airports<-airports[!is.na(airports$state), ]
+```
+
+#Check whether all the missing values were removed
+```{r}
+colSums(is.na(airports))
+colSums(is.na(plane_data))
+```
+#The missing values from "datacomb" will be removed where necessary when answering the questions
+
+#Saving the datasets
+```{r}
+write.csv(datacomb,"datacomb.csv")
+write.csv(airports,"airports.csv")
+write.csv(plane_data,"planedata.csv")
+```
+
+###It should be noted that since each question is done in seperate rmarkdown scripts,similar names to some dataframes have been given so every code including the reading the "datacomb" csv file has to be done from the start in every question.
